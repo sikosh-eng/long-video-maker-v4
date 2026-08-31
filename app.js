@@ -1,70 +1,105 @@
 // ============================================
 // LONG VIDEO MAKER V4
-// MAIN APP
+// MAIN CONTROLLER
 // ============================================
 
 let audioFile = null;
 let imageFiles = [];
 
-const audioInput = document.getElementById("audioInput");
-const imageInput = document.getElementById("imageInput");
+const audioInput =
+    document.getElementById("audioInput");
 
-const audioName = document.getElementById("audioName");
-const imageCount = document.getElementById("imageCount");
-const imageList = document.getElementById("imageList");
+const imageInput =
+    document.getElementById("imageInput");
 
-const createButton = document.getElementById("createButton");
-const status = document.getElementById("status");
+const audioName =
+    document.getElementById("audioName");
 
-const progress = document.getElementById("progress");
-const progressBar = document.getElementById("progressBar");
+const imageCount =
+    document.getElementById("imageCount");
 
+const imageList =
+    document.getElementById("imageList");
 
-// ============================================
-// AUDIO
-// ============================================
+const createButton =
+    document.getElementById("createButton");
 
-audioInput.addEventListener("change", function () {
+const status =
+    document.getElementById("status");
 
-    if (!this.files.length) return;
+const progress =
+    document.getElementById("progress");
 
-    audioFile = this.files[0];
-
-    audioName.textContent =
-        "✅ " + audioFile.name;
-});
-
-
-// ============================================
-// IMAGES
-// ============================================
-
-imageInput.addEventListener("change", function () {
-
-    imageFiles = Array.from(this.files);
-
-    imageCount.textContent =
-        "✅ Выбрано: " + imageFiles.length;
-
-    imageList.innerHTML = "";
-
-    imageFiles.forEach((file, index) => {
-
-        const item =
-            document.createElement("div");
-
-        item.className = "image-item";
-
-        item.textContent =
-            `${index + 1}. ${file.name}`;
-
-        imageList.appendChild(item);
-    });
-});
+const progressBar =
+    document.getElementById("progressBar");
 
 
 // ============================================
-// CREATE VIDEO
+// AUDIO SELECT
+// ============================================
+
+audioInput.addEventListener(
+    "change",
+    function () {
+
+        if (!this.files.length) {
+            return;
+        }
+
+        audioFile =
+            this.files[0];
+
+        audioName.textContent =
+            "✅ " + audioFile.name;
+    }
+);
+
+
+// ============================================
+// IMAGE SELECT
+// ============================================
+
+imageInput.addEventListener(
+    "change",
+    function () {
+
+        imageFiles =
+            Array.from(
+                this.files
+            );
+
+        imageCount.textContent =
+            "✅ Выбрано: " +
+            imageFiles.length;
+
+        imageList.innerHTML = "";
+
+
+        imageFiles.forEach(
+            (file, index) => {
+
+                const item =
+                    document.createElement(
+                        "div"
+                    );
+
+                item.className =
+                    "image-item";
+
+                item.textContent =
+                    `${index + 1}. ${file.name}`;
+
+                imageList.appendChild(
+                    item
+                );
+            }
+        );
+    }
+);
+
+
+// ============================================
+// CREATE
 // ============================================
 
 createButton.addEventListener(
@@ -74,40 +109,33 @@ createButton.addEventListener(
         if (!audioFile) {
 
             showStatus(
-                "❌ Сначала добавь озвучку."
+                "❌ Добавь озвучку."
             );
 
             return;
         }
+
 
         if (!imageFiles.length) {
 
             showStatus(
-                "❌ Сначала добавь картинки."
+                "❌ Добавь картинки."
             );
 
             return;
         }
 
 
-        createButton.disabled = true;
+        createButton.disabled =
+            true;
 
-        progress.style.display = "block";
+        progress.style.display =
+            "block";
 
-        setProgress(5);
+        setProgress(1);
+
 
         try {
-
-            showStatus(
-                "🎙️ Определяем длину озвучки..."
-            );
-
-
-            const duration =
-                await getAudioDuration(
-                    audioFile
-                );
-
 
             const format =
                 document.getElementById(
@@ -131,88 +159,62 @@ createButton.addEventListener(
                 );
 
 
-            setProgress(10);
+            // ------------------------------------
+            // AUTOMATIC PIPELINE
+            // ------------------------------------
 
+            const result =
+                await AutoPipeline.run({
 
-            showStatus(
-                "🖼️ Подготавливаем картинки..."
-            );
+                    audio:
+                        audioFile,
 
+                    images:
+                        imageFiles,
 
-            const timeline =
-                VideoEngine.createTimeline(
-                    imageFiles,
-                    duration
-                );
+                    format:
+                        format,
 
+                    resolution:
+                        resolution,
 
-            setProgress(20);
+                    fps:
+                        fps,
 
+                    onProgress:
+                        function (
+                            value,
+                            message
+                        ) {
 
-            showStatus(
-                "🎬 Создаём видео...\n\n" +
-                "Не закрывай страницу."
-            );
+                            setProgress(
+                                value
+                            );
 
+                            if (message) {
 
-            const blob =
-                await ExportEngine.createVideo({
-
-                    images: imageFiles,
-
-                    audioFile: audioFile,
-
-                    duration: duration,
-
-                    format: format,
-
-                    resolution: resolution,
-
-                    fps: fps,
-
-                    onProgress: function (value) {
-
-                        setProgress(value);
-
-                    }
-
+                                showStatus(
+                                    message
+                                );
+                            }
+                        }
                 });
 
 
-            setProgress(100);
+            // ------------------------------------
+            // SHOW RESULT
+            // ------------------------------------
 
-
-            showStatus(
-                "✅ Видео готово!\n\n" +
-                "Длительность: " +
-                duration.toFixed(1) +
-                " сек.\n" +
-                "Картинок: " +
-                imageFiles.length +
-                "\n" +
-                "Формат: " +
-                format +
-                "\n" +
-                "FPS: " +
-                fps
-            );
-
-
-            const filename =
-                "long-video-" +
-                Date.now() +
-                ".webm";
-
-
-            ExportEngine.download(
-                blob,
-                filename
+            showTimeline(
+                result
             );
 
 
         } catch (error) {
 
-            console.error(error);
+            console.error(
+                error
+            );
 
             showStatus(
                 "❌ Ошибка:\n" +
@@ -222,68 +224,153 @@ createButton.addEventListener(
         }
 
 
-        createButton.disabled = false;
-
+        createButton.disabled =
+            false;
     }
 );
 
 
 // ============================================
-// AUDIO DURATION
+// TIMELINE UI
 // ============================================
 
-function getAudioDuration(file) {
+function showTimeline(result) {
 
-    return new Promise(
-        (resolve, reject) => {
-
-            const audio =
-                new Audio();
-
-            const url =
-                URL.createObjectURL(file);
-
-            audio.src = url;
+    const timeline =
+        result.timeline;
 
 
-            audio.onloadedmetadata =
-                function () {
-
-                    const duration =
-                        audio.duration;
-
-                    URL.revokeObjectURL(url);
-
-                    if (
-                        !duration ||
-                        !isFinite(duration)
-                    ) {
-
-                        reject(
-                            new Error(
-                                "Некорректная длительность аудио."
-                            )
-                        );
-
-                        return;
-                    }
-
-                    resolve(duration);
-                };
+    let text =
+        "🎬 АВТОМОНТАЖ ГОТОВ\n\n";
 
 
-            audio.onerror =
-                function () {
+    text +=
+        "🎙️ Длительность: " +
+        result.duration.toFixed(1) +
+        " сек.\n";
 
-                    URL.revokeObjectURL(url);
 
-                    reject(
-                        new Error(
-                            "Не удалось прочитать аудио."
-                        )
-                    );
-                };
+    text +=
+        "🖼️ Картинок: " +
+        timeline.length +
+        "\n";
+
+
+    text +=
+        "📐 Формат: " +
+        result.format +
+        "\n";
+
+
+    text +=
+        "🎥 Разрешение: " +
+        result.resolution +
+        "p\n";
+
+
+    text +=
+        "🎞️ FPS: " +
+        result.fps +
+        "\n\n";
+
+
+    text +=
+        "──────────────\n\n";
+
+
+    timeline.forEach(
+        (item, index) => {
+
+            text +=
+                `${index + 1}. `;
+
+
+            if (item.image) {
+
+                text +=
+                    item.image.name;
+
+            } else {
+
+                text +=
+                    "Без изображения";
+            }
+
+
+            text +=
+                "\n";
+
+
+            text +=
+                `${formatTime(item.start)} → ` +
+                `${formatTime(item.end)}\n`;
+
+
+            if (item.text) {
+
+                text +=
+                    "🗣️ " +
+                    item.text +
+                    "\n";
+            }
+
+
+            if (
+                item.keywords &&
+                item.keywords.length
+            ) {
+
+                text +=
+                    "🔑 " +
+                    item.keywords.join(
+                        ", "
+                    ) +
+                    "\n";
+            }
+
+
+            text +=
+                "\n";
         }
+    );
+
+
+    showStatus(
+        text
+    );
+}
+
+
+// ============================================
+// TIME FORMAT
+// ============================================
+
+function formatTime(seconds) {
+
+    seconds =
+        Math.max(
+            0,
+            Number(seconds) || 0
+        );
+
+
+    const minutes =
+        Math.floor(
+            seconds / 60
+        );
+
+
+    const secs =
+        seconds % 60;
+
+
+    return (
+        String(minutes)
+            .padStart(2, "0")
+        +
+        ":" +
+        secs.toFixed(1)
+            .padStart(4, "0")
     );
 }
 
@@ -297,8 +384,12 @@ function setProgress(value) {
     progressBar.style.width =
         Math.max(
             0,
-            Math.min(100, value)
-        ) + "%";
+            Math.min(
+                100,
+                value
+            )
+        ) +
+        "%";
 }
 
 
@@ -308,7 +399,9 @@ function setProgress(value) {
 
 function showStatus(text) {
 
-    status.style.display = "block";
+    status.style.display =
+        "block";
 
-    status.textContent = text;
+    status.textContent =
+        text;
 }
