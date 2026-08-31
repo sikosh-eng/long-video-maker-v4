@@ -23,6 +23,8 @@ const imageList =
 
 const createButton =
     document.getElementById("createButton");
+const previewButton =
+    document.getElementById("previewButton");
 
 const status =
     document.getElementById("status");
@@ -238,6 +240,9 @@ function showTimeline(result) {
 
     const timeline =
         result.timeline;
+    
+    previewTimeline =
+    result.timeline;
 
 
     let text =
@@ -412,4 +417,93 @@ function showStatus(text) {
 
     status.textContent =
         text;
+}
+// ============================================
+// PREVIEW
+// ============================================
+
+let previewTimeline = [];
+let previewTimer = null;
+
+previewButton.addEventListener(
+    "click",
+    function () {
+
+        if (!previewTimeline.length) {
+
+            showStatus(
+                "❌ Сначала создай автомонтаж."
+            );
+
+            return;
+        }
+
+        startPreview();
+    }
+);
+
+
+function startPreview() {
+
+    let index = 0;
+
+    clearInterval(previewTimer);
+
+    showStatus(
+        "▶️ Предпросмотр запущен..."
+    );
+
+
+    function showNext() {
+
+        if (
+            index >=
+            previewTimeline.length
+        ) {
+
+            clearInterval(
+                previewTimer
+            );
+
+            showStatus(
+                "✅ Предпросмотр завершён."
+            );
+
+            return;
+        }
+
+
+        const item =
+            previewTimeline[index];
+
+
+        showStatus(
+            "🖼️ Кадр " +
+            (index + 1) +
+            "\n\n" +
+            "⏱️ " +
+            formatTime(item.start) +
+            " → " +
+            formatTime(item.end) +
+            "\n\n" +
+            "🗣️ " +
+            (
+                item.text ||
+                "Текст отсутствует"
+            )
+        );
+
+
+        index++;
+    }
+
+
+    showNext();
+
+
+    previewTimer =
+        setInterval(
+            showNext,
+            2000
+        );
 }
