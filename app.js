@@ -501,9 +501,87 @@ function startPreview() {
     showNext();
 
 
-    previewTimer =
-        setInterval(
-            showNext,
-            2000
+    function playTimeline() {
+
+    if (
+        index >=
+        previewTimeline.length
+    ) {
+
+        showStatus(
+            "✅ Предпросмотр завершён."
         );
+
+        return;
+    }
+
+
+    const item =
+        previewTimeline[index];
+
+
+    if (item.image) {
+
+        const url =
+            URL.createObjectURL(
+                item.image
+            );
+
+
+        imageElement.onload =
+            function () {
+
+                URL.revokeObjectURL(
+                    url
+                );
+
+            };
+
+
+        imageElement.src =
+            url;
+    }
+
+
+    showStatus(
+        "▶️ Кадр " +
+        (index + 1) +
+        "\n\n" +
+        "⏱️ " +
+        formatTime(item.start) +
+        " → " +
+        formatTime(item.end) +
+        "\n\n" +
+        "🗣️ " +
+        (
+            item.text ||
+            "Текст отсутствует"
+        )
+    );
+
+
+    const duration =
+        Math.max(
+            0.5,
+            (
+                item.end -
+                item.start
+            ) * 1000
+        );
+
+
+    index++;
+
+
+    previewTimer =
+        setTimeout(
+            playTimeline,
+            duration
+        );
+}
+
+
+index = 0;
+
+playTimeline();
 }
