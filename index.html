@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Long Video Maker</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f1117;
+      color: white;
+    }
+
+    .app {
+      max-width: 700px;
+      margin: auto;
+      padding: 24px;
+    }
+
+    h1 {
+      margin-bottom: 8px;
+      font-size: 30px;
+    }
+
+    .subtitle {
+      color: #9ca3af;
+      margin-bottom: 25px;
+    }
+
+    .card {
+      background: #191c25;
+      border: 1px solid #292d38;
+      border-radius: 18px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .upload {
+      display: block;
+      width: 100%;
+      padding: 22px;
+      border: 2px dashed #555b6b;
+      border-radius: 15px;
+      text-align: center;
+      cursor: pointer;
+      margin-top: 12px;
+    }
+
+    .upload:hover {
+      border-color: #8b5cf6;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .file-name {
+      margin-top: 12px;
+      color: #b9a3ff;
+      word-break: break-word;
+    }
+
+    .settings {
+      display: grid;
+      gap: 14px;
+    }
+
+    label {
+      color: #d1d5db;
+      font-size: 14px;
+    }
+
+    select {
+      width: 100%;
+      margin-top: 7px;
+      padding: 13px;
+      border-radius: 10px;
+      border: 1px solid #343947;
+      background: #10131a;
+      color: white;
+      font-size: 16px;
+    }
+
+    button {
+      width: 100%;
+      padding: 17px;
+      border: 0;
+      border-radius: 14px;
+      background: #7c3aed;
+      color: white;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #6d28d9;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .status {
+      margin-top: 18px;
+      padding: 15px;
+      border-radius: 12px;
+      background: #11141c;
+      color: #c4c9d4;
+      display: none;
+    }
+
+    .image-list {
+      margin-top: 15px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .image-item {
+      background: #11141c;
+      padding: 10px;
+      border-radius: 9px;
+      color: #c4c9d4;
+      font-size: 14px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="app">
+
+  <h1>AI Auto Video Maker</h1>
+
+  <div class="subtitle">
+    Добавь озвучку и картинки — приложение автоматически соберёт видео.
+  </div>
+
+  <div class="card">
+
+    <h2>🎙️ Озвучка</h2>
+
+    <label class="upload">
+      Нажми, чтобы выбрать MP3 или WAV
+      <input
+        id="audioInput"
+        type="file"
+        accept="audio/*"
+      >
+    </label>
+
+    <div id="audioName" class="file-name"></div>
+
+  </div>
+
+
+  <div class="card">
+
+    <h2>🖼️ Картинки</h2>
+
+    <label class="upload">
+      Нажми, чтобы выбрать изображения
+      <input
+        id="imageInput"
+        type="file"
+        accept="image/*"
+        multiple
+      >
+    </label>
+
+    <div id="imageCount" class="file-name"></div>
+
+    <div id="imageList" class="image-list"></div>
+
+  </div>
+
+
+  <div class="card">
+
+    <h2>⚙️ Настройки</h2>
+
+    <div class="settings">
+
+      <div>
+        <label>Формат</label>
+
+        <select id="format">
+          <option value="9:16">9:16 — Shorts</option>
+          <option value="16:9">16:9 — YouTube</option>
+          <option value="1:1">1:1 — квадрат</option>
+        </select>
+      </div>
+
+
+      <div>
+        <label>Разрешение</label>
+
+        <select id="resolution">
+          <option value="720">720p</option>
+          <option value="1080" selected>1080p</option>
+          <option value="1440">1440p</option>
+          <option value="2160">4K</option>
+        </select>
+      </div>
+
+
+      <div>
+        <label>FPS</label>
+
+        <select id="fps">
+          <option value="24">24 FPS</option>
+          <option value="30" selected>30 FPS</option>
+          <option value="60">60 FPS</option>
+        </select>
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <button id="createButton">
+    ✨ СОЗДАТЬ ВИДЕО
+  </button>
+
+  <div id="status" class="status"></div>
+
+</div>
+
+
+<script>
+
+const audioInput = document.getElementById("audioInput");
+const imageInput = document.getElementById("imageInput");
+
+const audioName = document.getElementById("audioName");
+const imageCount = document.getElementById("imageCount");
+const imageList = document.getElementById("imageList");
+
+const createButton = document.getElementById("createButton");
+const status = document.getElementById("status");
+
+
+let audioFile = null;
+let imageFiles = [];
+
+
+audioInput.addEventListener("change", () => {
+
+  if (!audioInput.files.length) return;
+
+  audioFile = audioInput.files[0];
+
+  audioName.textContent =
+    "Выбрано: " + audioFile.name;
+
+});
+
+
+imageInput.addEventListener("change", () => {
+
+  imageFiles = Array.from(imageInput.files);
+
+  imageCount.textContent =
+    "Выбрано изображений: " + imageFiles.length;
+
+  imageList.innerHTML = "";
+
+  imageFiles.forEach((file, index) => {
+
+    const item = document.createElement("div");
+
+    item.className = "image-item";
+
+    item.textContent =
+      (index + 1) + ". " + file.name;
+
+    imageList.appendChild(item);
+
+  });
+
+});
+
+
+createButton.addEventListener("click", async () => {
+
+  if (!audioFile) {
+
+    showStatus("❌ Сначала добавь озвучку.");
+
+    return;
+
+  }
+
+
+  if (!imageFiles.length) {
+
+    showStatus("❌ Сначала добавь картинки.");
+
+    return;
+
+  }
+
+
+  showStatus("⏳ Анализируем озвучку...");
+
+
+  try {
+
+    const audio = new Audio();
+
+    audio.src = URL.createObjectURL(audioFile);
+
+    await new Promise((resolve, reject) => {
+
+      audio.addEventListener("loadedmetadata", resolve);
+
+      audio.addEventListener("error", reject);
+
+    });
+
+
+    const duration = audio.duration;
+
+    const imageDuration =
+      duration / imageFiles.length;
+
+
+    const format =
+      document.getElementById("format").value;
+
+    const resolution =
+      document.getElementById("resolution").value;
+
+    const fps =
+      document.getElementById("fps").value;
+
+
+    showStatus(
+
+      "✅ Анализ завершён!\n\n" +
+
+      "Длина озвучки: " +
+      duration.toFixed(1) +
+      " сек.\n\n" +
+
+      "Картинок: " +
+      imageFiles.length +
+      "\n\n" +
+
+      "Средняя длительность картинки: " +
+      imageDuration.toFixed(2) +
+      " сек.\n\n" +
+
+      "Формат: " +
+      format +
+      "\n" +
+
+      "Разрешение: " +
+      resolution +
+      "p\n" +
+
+      "FPS: " +
+      fps
+
+    );
+
+  } catch (error) {
+
+    showStatus(
+      "❌ Не удалось прочитать озвучку."
+    );
+
+  }
+
+});
+
+
+function showStatus(text) {
+
+  status.style.display = "block";
+
+  status.style.whiteSpace = "pre-line";
+
+  status.textContent = text;
+
+}
+
+</script>
+
+</body>
+</html>
