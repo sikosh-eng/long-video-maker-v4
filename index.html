@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Long Video Maker</title>
+  <title>Long Video Maker V4</title>
 
   <style>
     * {
@@ -14,23 +14,24 @@
       margin: 0;
       font-family: Arial, sans-serif;
       background: #0f1117;
-      color: white;
+      color: #fff;
     }
 
     .app {
-      max-width: 700px;
+      max-width: 720px;
       margin: auto;
-      padding: 24px;
+      padding: 20px;
     }
 
     h1 {
-      margin-bottom: 8px;
+      margin: 5px 0;
       font-size: 30px;
     }
 
     .subtitle {
       color: #9ca3af;
       margin-bottom: 25px;
+      line-height: 1.5;
     }
 
     .card {
@@ -41,15 +42,19 @@
       margin-bottom: 16px;
     }
 
+    .card h2 {
+      margin-top: 0;
+      font-size: 20px;
+    }
+
     .upload {
       display: block;
-      width: 100%;
-      padding: 22px;
-      border: 2px dashed #555b6b;
+      padding: 25px 15px;
+      border: 2px dashed #4b5263;
       border-radius: 15px;
       text-align: center;
+      color: #d1d5db;
       cursor: pointer;
-      margin-top: 12px;
     }
 
     .upload:hover {
@@ -60,10 +65,24 @@
       display: none;
     }
 
-    .file-name {
+    .selected {
       margin-top: 12px;
-      color: #b9a3ff;
+      color: #a78bfa;
       word-break: break-word;
+    }
+
+    .image-list {
+      margin-top: 15px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .image-item {
+      background: #11141c;
+      padding: 10px;
+      border-radius: 9px;
+      font-size: 14px;
+      color: #cbd5e1;
     }
 
     .settings {
@@ -72,7 +91,8 @@
     }
 
     label {
-      color: #d1d5db;
+      display: block;
+      color: #cbd5e1;
       font-size: 14px;
     }
 
@@ -89,9 +109,9 @@
 
     button {
       width: 100%;
-      padding: 17px;
       border: 0;
       border-radius: 14px;
+      padding: 17px;
       background: #7c3aed;
       color: white;
       font-size: 17px;
@@ -104,31 +124,42 @@
     }
 
     button:disabled {
-      opacity: 0.5;
+      opacity: .5;
       cursor: not-allowed;
     }
 
     .status {
-      margin-top: 18px;
-      padding: 15px;
-      border-radius: 12px;
-      background: #11141c;
-      color: #c4c9d4;
+      display: none;
+      margin-top: 16px;
+      padding: 16px;
+      background: #191c25;
+      border-radius: 14px;
+      white-space: pre-line;
+      line-height: 1.6;
+      color: #d1d5db;
+    }
+
+    .progress {
+      height: 8px;
+      background: #292d38;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 15px;
       display: none;
     }
 
-    .image-list {
-      margin-top: 15px;
-      display: grid;
-      gap: 8px;
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: #8b5cf6;
+      transition: width .3s;
     }
 
-    .image-item {
-      background: #11141c;
-      padding: 10px;
-      border-radius: 9px;
-      color: #c4c9d4;
-      font-size: 14px;
+    .info {
+      color: #9ca3af;
+      font-size: 13px;
+      line-height: 1.5;
+      margin-top: 12px;
     }
   </style>
 </head>
@@ -137,50 +168,73 @@
 
 <div class="app">
 
-  <h1>AI Auto Video Maker</h1>
+  <h1>🎬 Long Video Maker V4</h1>
 
   <div class="subtitle">
-    Добавь озвучку и картинки — приложение автоматически соберёт видео.
+    Загрузи только озвучку и картинки.
+    Приложение подготовит их для автоматического монтажа.
   </div>
+
+
+  <!-- AUDIO -->
 
   <div class="card">
 
     <h2>🎙️ Озвучка</h2>
 
     <label class="upload">
-      Нажми, чтобы выбрать MP3 или WAV
+
+      Нажми и выбери MP3 или WAV
+
       <input
         id="audioInput"
         type="file"
         accept="audio/*"
       >
+
     </label>
 
-    <div id="audioName" class="file-name"></div>
+    <div
+      id="audioName"
+      class="selected">
+    </div>
 
   </div>
 
+
+  <!-- IMAGES -->
 
   <div class="card">
 
     <h2>🖼️ Картинки</h2>
 
     <label class="upload">
-      Нажми, чтобы выбрать изображения
+
+      Нажми и выбери все картинки
+
       <input
         id="imageInput"
         type="file"
         accept="image/*"
         multiple
       >
+
     </label>
 
-    <div id="imageCount" class="file-name"></div>
+    <div
+      id="imageCount"
+      class="selected">
+    </div>
 
-    <div id="imageList" class="image-list"></div>
+    <div
+      id="imageList"
+      class="image-list">
+    </div>
 
   </div>
 
+
+  <!-- SETTINGS -->
 
   <div class="card">
 
@@ -188,208 +242,481 @@
 
     <div class="settings">
 
-      <div>
-        <label>Формат</label>
+      <label>
+        Формат
 
         <select id="format">
-          <option value="9:16">9:16 — Shorts</option>
-          <option value="16:9">16:9 — YouTube</option>
-          <option value="1:1">1:1 — квадрат</option>
+
+          <option value="9:16">
+            9:16 — Shorts
+          </option>
+
+          <option value="16:9">
+            16:9 — YouTube
+          </option>
+
+          <option value="1:1">
+            1:1 — Квадрат
+          </option>
+
         </select>
-      </div>
+
+      </label>
 
 
-      <div>
-        <label>Разрешение</label>
+      <label>
+        Разрешение
 
         <select id="resolution">
-          <option value="720">720p</option>
-          <option value="1080" selected>1080p</option>
-          <option value="1440">1440p</option>
-          <option value="2160">4K</option>
+
+          <option value="720">
+            720p
+          </option>
+
+          <option
+            value="1080"
+            selected>
+            1080p
+          </option>
+
+          <option value="1440">
+            1440p
+          </option>
+
+          <option value="2160">
+            4K
+          </option>
+
         </select>
-      </div>
+
+      </label>
 
 
-      <div>
-        <label>FPS</label>
+      <label>
+        FPS
 
         <select id="fps">
-          <option value="24">24 FPS</option>
-          <option value="30" selected>30 FPS</option>
-          <option value="60">60 FPS</option>
+
+          <option value="24">
+            24 FPS
+          </option>
+
+          <option
+            value="30"
+            selected>
+            30 FPS
+          </option>
+
+          <option value="60">
+            60 FPS
+          </option>
+
         </select>
-      </div>
+
+      </label>
 
     </div>
 
   </div>
 
 
+  <!-- CREATE -->
+
   <button id="createButton">
-    ✨ СОЗДАТЬ ВИДЕО
+    ✨ СОЗДАТЬ АВТОМОНТАЖ
   </button>
 
-  <div id="status" class="status"></div>
+
+  <div
+    id="progress"
+    class="progress">
+
+    <div
+      id="progressBar"
+      class="progress-bar">
+    </div>
+
+  </div>
+
+
+  <div
+    id="status"
+    class="status">
+  </div>
+
+
+  <div class="info">
+    В будущей версии AI будет анализировать содержание
+    озвучки и автоматически выбирать подходящие изображения.
+  </div>
 
 </div>
 
 
+<script src="ai.js"></script>
+<script src="speech.js"></script>
+<script src="app.js"></script>
+
+
 <script>
 
-const audioInput = document.getElementById("audioInput");
-const imageInput = document.getElementById("imageInput");
+const audioInput =
+  document.getElementById("audioInput");
 
-const audioName = document.getElementById("audioName");
-const imageCount = document.getElementById("imageCount");
-const imageList = document.getElementById("imageList");
+const imageInput =
+  document.getElementById("imageInput");
 
-const createButton = document.getElementById("createButton");
-const status = document.getElementById("status");
+const audioName =
+  document.getElementById("audioName");
 
+const imageCount =
+  document.getElementById("imageCount");
 
-let audioFile = null;
-let imageFiles = [];
+const imageList =
+  document.getElementById("imageList");
 
+const createButton =
+  document.getElementById("createButton");
 
-audioInput.addEventListener("change", () => {
+const status =
+  document.getElementById("status");
 
-  if (!audioInput.files.length) return;
+const progress =
+  document.getElementById("progress");
 
-  audioFile = audioInput.files[0];
-
-  audioName.textContent =
-    "Выбрано: " + audioFile.name;
-
-});
-
-
-imageInput.addEventListener("change", () => {
-
-  imageFiles = Array.from(imageInput.files);
-
-  imageCount.textContent =
-    "Выбрано изображений: " + imageFiles.length;
-
-  imageList.innerHTML = "";
-
-  imageFiles.forEach((file, index) => {
-
-    const item = document.createElement("div");
-
-    item.className = "image-item";
-
-    item.textContent =
-      (index + 1) + ". " + file.name;
-
-    imageList.appendChild(item);
-
-  });
-
-});
+const progressBar =
+  document.getElementById("progressBar");
 
 
-createButton.addEventListener("click", async () => {
+let selectedAudio = null;
+let selectedImages = [];
 
-  if (!audioFile) {
 
-    showStatus("❌ Сначала добавь озвучку.");
+// ============================================
+// AUDIO
+// ============================================
 
-    return;
+audioInput.addEventListener(
+  "change",
+  function () {
+
+    if (!this.files.length) return;
+
+    selectedAudio =
+      this.files[0];
+
+    audioName.textContent =
+      "✅ " + selectedAudio.name;
 
   }
+);
 
 
-  if (!imageFiles.length) {
+// ============================================
+// IMAGES
+// ============================================
 
-    showStatus("❌ Сначала добавь картинки.");
+imageInput.addEventListener(
+  "change",
+  function () {
 
-    return;
+    selectedImages =
+      Array.from(this.files);
 
-  }
+    imageCount.textContent =
+      "✅ Выбрано: " +
+      selectedImages.length;
 
-
-  showStatus("⏳ Анализируем озвучку...");
-
-
-  try {
-
-    const audio = new Audio();
-
-    audio.src = URL.createObjectURL(audioFile);
-
-    await new Promise((resolve, reject) => {
-
-      audio.addEventListener("loadedmetadata", resolve);
-
-      audio.addEventListener("error", reject);
-
-    });
+    imageList.innerHTML = "";
 
 
-    const duration = audio.duration;
+    selectedImages.forEach(
+      (file, index) => {
 
-    const imageDuration =
-      duration / imageFiles.length;
+        const item =
+          document.createElement("div");
 
+        item.className =
+          "image-item";
 
-    const format =
-      document.getElementById("format").value;
+        item.textContent =
+          `${index + 1}. ${file.name}`;
 
-    const resolution =
-      document.getElementById("resolution").value;
+        imageList.appendChild(item);
 
-    const fps =
-      document.getElementById("fps").value;
-
-
-    showStatus(
-
-      "✅ Анализ завершён!\n\n" +
-
-      "Длина озвучки: " +
-      duration.toFixed(1) +
-      " сек.\n\n" +
-
-      "Картинок: " +
-      imageFiles.length +
-      "\n\n" +
-
-      "Средняя длительность картинки: " +
-      imageDuration.toFixed(2) +
-      " сек.\n\n" +
-
-      "Формат: " +
-      format +
-      "\n" +
-
-      "Разрешение: " +
-      resolution +
-      "p\n" +
-
-      "FPS: " +
-      fps
-
-    );
-
-  } catch (error) {
-
-    showStatus(
-      "❌ Не удалось прочитать озвучку."
+      }
     );
 
   }
+);
 
-});
 
+// ============================================
+// CREATE
+// ============================================
+
+createButton.addEventListener(
+  "click",
+  async function () {
+
+    if (!selectedAudio) {
+
+      showStatus(
+        "❌ Добавь озвучку."
+      );
+
+      return;
+
+    }
+
+
+    if (!selectedImages.length) {
+
+      showStatus(
+        "❌ Добавь картинки."
+      );
+
+      return;
+
+    }
+
+
+    createButton.disabled = true;
+
+    progress.style.display =
+      "block";
+
+    setProgress(10);
+
+    showStatus(
+      "⏳ Читаем озвучку..."
+    );
+
+
+    try {
+
+      const duration =
+        await getAudioDuration(
+          selectedAudio
+        );
+
+
+      setProgress(30);
+
+      showStatus(
+        "⏳ Подготавливаем таймлайн..."
+      );
+
+
+      const timeline =
+        createTimeline(
+          duration,
+          selectedImages
+        );
+
+
+      setProgress(70);
+
+
+      const format =
+        document.getElementById(
+          "format"
+        ).value;
+
+
+      const resolution =
+        document.getElementById(
+          "resolution"
+        ).value;
+
+
+      const fps =
+        Number(
+          document.getElementById(
+            "fps"
+          ).value
+        );
+
+
+      setProgress(100);
+
+
+      let result =
+        "✅ Автомонтаж подготовлен!\n\n";
+
+      result +=
+        "🎙️ Озвучка: " +
+        duration.toFixed(2) +
+        " сек.\n\n";
+
+      result +=
+        "🖼️ Картинок: " +
+        selectedImages.length +
+        "\n\n";
+
+      result +=
+        "📐 Формат: " +
+        format +
+        "\n";
+
+      result +=
+        "🎥 Разрешение: " +
+        resolution +
+        "p\n";
+
+      result +=
+        "🎞️ FPS: " +
+        fps +
+        "\n\n";
+
+      result +=
+        "Средняя длительность одной картинки: " +
+        (
+          duration /
+          selectedImages.length
+        ).toFixed(2) +
+        " сек.";
+
+
+      showStatus(result);
+
+
+    } catch (error) {
+
+      showStatus(
+        "❌ Ошибка:\n" +
+        error.message
+      );
+
+    }
+
+
+    createButton.disabled = false;
+
+  }
+);
+
+
+// ============================================
+// AUDIO DURATION
+// ============================================
+
+function getAudioDuration(file) {
+
+  return new Promise(
+    (resolve, reject) => {
+
+      const audio =
+        new Audio();
+
+      const url =
+        URL.createObjectURL(file);
+
+      audio.src = url;
+
+
+      audio.onloadedmetadata =
+        function () {
+
+          const duration =
+            audio.duration;
+
+          URL.revokeObjectURL(
+            url
+          );
+
+          resolve(duration);
+
+        };
+
+
+      audio.onerror =
+        function () {
+
+          URL.revokeObjectURL(
+            url
+          );
+
+          reject(
+            new Error(
+              "Не удалось прочитать аудио."
+            )
+          );
+
+        };
+
+    }
+  );
+
+}
+
+
+// ============================================
+// TIMELINE
+// ============================================
+
+function createTimeline(
+  duration,
+  images
+) {
+
+  const timeline = [];
+
+  const part =
+    duration /
+    images.length;
+
+
+  images.forEach(
+    (image, index) => {
+
+      timeline.push({
+
+        image: image,
+
+        start:
+          index * part,
+
+        end:
+          (index + 1) * part,
+
+        duration:
+          part
+
+      });
+
+    }
+  );
+
+
+  return timeline;
+
+}
+
+
+// ============================================
+// PROGRESS
+// ============================================
+
+function setProgress(value) {
+
+  progressBar.style.width =
+    value + "%";
+
+}
+
+
+// ============================================
+// STATUS
+// ============================================
 
 function showStatus(text) {
 
-  status.style.display = "block";
+  status.style.display =
+    "block";
 
-  status.style.whiteSpace = "pre-line";
-
-  status.textContent = text;
+  status.textContent =
+    text;
 
 }
 
