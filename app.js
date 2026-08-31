@@ -338,6 +338,14 @@ function showTimeline(result) {
     showStatus(
         text
     );
+    if (
+    window.TimelineUI &&
+    result.timeline
+) {
+    TimelineUI.render(
+        result.timeline
+    );
+    }
 }
 
 
