@@ -1,6 +1,6 @@
 // ============================================
 // LONG VIDEO MAKER V4
-// Автоматическая подготовка монтажа
+// MAIN APP
 // ============================================
 
 let audioFile = null;
@@ -16,9 +16,12 @@ const imageList = document.getElementById("imageList");
 const createButton = document.getElementById("createButton");
 const status = document.getElementById("status");
 
+const progress = document.getElementById("progress");
+const progressBar = document.getElementById("progressBar");
+
 
 // ============================================
-// ОЗВУЧКА
+// AUDIO
 // ============================================
 
 audioInput.addEventListener("change", function () {
@@ -28,13 +31,12 @@ audioInput.addEventListener("change", function () {
     audioFile = this.files[0];
 
     audioName.textContent =
-        "🎙️ " + audioFile.name;
-
+        "✅ " + audioFile.name;
 });
 
 
 // ============================================
-// КАРТИНКИ
+// IMAGES
 // ============================================
 
 imageInput.addEventListener("change", function () {
@@ -42,261 +44,261 @@ imageInput.addEventListener("change", function () {
     imageFiles = Array.from(this.files);
 
     imageCount.textContent =
-        "🖼️ Выбрано: " + imageFiles.length;
+        "✅ Выбрано: " + imageFiles.length;
 
     imageList.innerHTML = "";
 
     imageFiles.forEach((file, index) => {
 
-        const item = document.createElement("div");
+        const item =
+            document.createElement("div");
 
         item.className = "image-item";
 
-        item.innerHTML =
-            `<b>${index + 1}.</b> ${file.name}`;
+        item.textContent =
+            `${index + 1}. ${file.name}`;
 
         imageList.appendChild(item);
-
     });
-
 });
 
 
 // ============================================
-// СОЗДАНИЕ МОНТАЖА
+// CREATE VIDEO
 // ============================================
 
-createButton.addEventListener("click", async function () {
+createButton.addEventListener(
+    "click",
+    async function () {
 
-    if (!audioFile) {
+        if (!audioFile) {
 
-        showStatus(
-            "❌ Добавь озвучку."
-        );
+            showStatus(
+                "❌ Сначала добавь озвучку."
+            );
 
-        return;
-    }
+            return;
+        }
 
-    if (!imageFiles.length) {
+        if (!imageFiles.length) {
 
-        showStatus(
-            "❌ Добавь хотя бы одну картинку."
-        );
+            showStatus(
+                "❌ Сначала добавь картинки."
+            );
 
-        return;
-    }
-
-    createButton.disabled = true;
-
-    showStatus(
-        "⏳ Подготавливаем автоматический монтаж..."
-    );
+            return;
+        }
 
 
-    try {
+        createButton.disabled = true;
 
-        // Получаем длительность аудио
-        const duration = await getAudioDuration(audioFile);
+        progress.style.display = "block";
 
-        // Получаем настройки
-        const format =
-            document.getElementById("format").value;
+        setProgress(5);
 
-        const resolution =
-            document.getElementById("resolution").value;
+        try {
 
-        const fps =
-            Number(document.getElementById("fps").value);
-
-
-        // Распределяем изображения
-        const timeline =
-            createTimeline(
-                duration,
-                imageFiles
+            showStatus(
+                "🎙️ Определяем длину озвучки..."
             );
 
 
-        // Показываем результат
-        showTimeline(
-            duration,
-            timeline,
-            format,
-            resolution,
-            fps
-        );
+            const duration =
+                await getAudioDuration(
+                    audioFile
+                );
 
-    } catch (error) {
 
-        console.error(error);
+            const format =
+                document.getElementById(
+                    "format"
+                ).value;
 
-        showStatus(
-            "❌ Произошла ошибка.\n" +
-            error.message
-        );
+
+            const resolution =
+                Number(
+                    document.getElementById(
+                        "resolution"
+                    ).value
+                );
+
+
+            const fps =
+                Number(
+                    document.getElementById(
+                        "fps"
+                    ).value
+                );
+
+
+            setProgress(10);
+
+
+            showStatus(
+                "🖼️ Подготавливаем картинки..."
+            );
+
+
+            const timeline =
+                VideoEngine.createTimeline(
+                    imageFiles,
+                    duration
+                );
+
+
+            setProgress(20);
+
+
+            showStatus(
+                "🎬 Создаём видео...\n\n" +
+                "Не закрывай страницу."
+            );
+
+
+            const blob =
+                await ExportEngine.createVideo({
+
+                    images: imageFiles,
+
+                    audioFile: audioFile,
+
+                    duration: duration,
+
+                    format: format,
+
+                    resolution: resolution,
+
+                    fps: fps,
+
+                    onProgress: function (value) {
+
+                        setProgress(value);
+
+                    }
+
+                });
+
+
+            setProgress(100);
+
+
+            showStatus(
+                "✅ Видео готово!\n\n" +
+                "Длительность: " +
+                duration.toFixed(1) +
+                " сек.\n" +
+                "Картинок: " +
+                imageFiles.length +
+                "\n" +
+                "Формат: " +
+                format +
+                "\n" +
+                "FPS: " +
+                fps
+            );
+
+
+            const filename =
+                "long-video-" +
+                Date.now() +
+                ".webm";
+
+
+            ExportEngine.download(
+                blob,
+                filename
+            );
+
+
+        } catch (error) {
+
+            console.error(error);
+
+            showStatus(
+                "❌ Ошибка:\n" +
+                error.message
+            );
+
+        }
+
+
+        createButton.disabled = false;
 
     }
-
-    createButton.disabled = false;
-
-});
+);
 
 
 // ============================================
-// ПОЛУЧЕНИЕ ДЛИТЕЛЬНОСТИ AUDIO
+// AUDIO DURATION
 // ============================================
 
 function getAudioDuration(file) {
 
-    return new Promise((resolve, reject) => {
+    return new Promise(
+        (resolve, reject) => {
 
-        const audio = new Audio();
+            const audio =
+                new Audio();
 
-        const url =
-            URL.createObjectURL(file);
+            const url =
+                URL.createObjectURL(file);
 
-        audio.src = url;
+            audio.src = url;
 
-        audio.addEventListener(
-            "loadedmetadata",
-            function () {
 
-                const duration =
-                    audio.duration;
+            audio.onloadedmetadata =
+                function () {
 
-                URL.revokeObjectURL(url);
+                    const duration =
+                        audio.duration;
 
-                resolve(duration);
+                    URL.revokeObjectURL(url);
 
-            }
-        );
+                    if (
+                        !duration ||
+                        !isFinite(duration)
+                    ) {
 
-        audio.addEventListener(
-            "error",
-            function () {
+                        reject(
+                            new Error(
+                                "Некорректная длительность аудио."
+                            )
+                        );
 
-                URL.revokeObjectURL(url);
+                        return;
+                    }
 
-                reject(
-                    new Error(
-                        "Не удалось прочитать аудио."
-                    )
-                );
+                    resolve(duration);
+                };
 
-            }
-        );
 
-    });
+            audio.onerror =
+                function () {
 
+                    URL.revokeObjectURL(url);
+
+                    reject(
+                        new Error(
+                            "Не удалось прочитать аудио."
+                        )
+                    );
+                };
+        }
+    );
 }
 
 
 // ============================================
-// СОЗДАНИЕ TIMELINE
+// PROGRESS
 // ============================================
 
-function createTimeline(
-    audioDuration,
-    images
-) {
+function setProgress(value) {
 
-    const result = [];
-
-    const imageDuration =
-        audioDuration / images.length;
-
-
-    images.forEach((image, index) => {
-
-        const start =
-            index * imageDuration;
-
-        const end =
-            (index + 1) * imageDuration;
-
-
-        result.push({
-
-            index: index,
-
-            file: image,
-
-            name: image.name,
-
-            start: start,
-
-            end: end,
-
-            duration: imageDuration
-
-        });
-
-    });
-
-
-    return result;
-
-}
-
-
-// ============================================
-// ПОКАЗ TIMELINE
-// ============================================
-
-function showTimeline(
-    audioDuration,
-    timeline,
-    format,
-    resolution,
-    fps
-) {
-
-    let text =
-        "✅ Монтаж подготовлен!\n\n";
-
-    text +=
-        "🎙️ Озвучка: " +
-        audioDuration.toFixed(2) +
-        " сек.\n\n";
-
-    text +=
-        "🖼️ Картинок: " +
-        timeline.length +
-        "\n\n";
-
-    text +=
-        "📐 Формат: " +
-        format +
-        "\n";
-
-    text +=
-        "🎥 Разрешение: " +
-        resolution +
-        "p\n";
-
-    text +=
-        "🎞️ FPS: " +
-        fps +
-        "\n\n";
-
-    text +=
-        "──────────────\n\n";
-
-
-    timeline.forEach((item) => {
-
-        text +=
-            `${item.index + 1}. ${item.name}\n`;
-
-        text +=
-            `${item.start.toFixed(1)}с → ` +
-            `${item.end.toFixed(1)}с\n\n`;
-
-    });
-
-
-    showStatus(text);
-
+    progressBar.style.width =
+        Math.max(
+            0,
+            Math.min(100, value)
+        ) + "%";
 }
 
 
@@ -308,8 +310,5 @@ function showStatus(text) {
 
     status.style.display = "block";
 
-    status.style.whiteSpace = "pre-line";
-
     status.textContent = text;
-
 }
