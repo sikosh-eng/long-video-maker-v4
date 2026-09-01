@@ -20,12 +20,31 @@ jobs:
         run: |
           flutter create --platforms=android generated_app
 
-      - name: Set Android compile SDK 36
+      - name: Set compileSdk to 36
         run: |
-          sed -i 's/compileSdk = flutter.compileSdkVersion/compileSdk = 36/' generated_app/android/app/build.gradle.kts
-          sed -i 's/compileSdk flutter.compileSdkVersion/compileSdk 36/' generated_app/android/app/build.gradle
+          python3 - <<'PY'
+          from pathlib import Path
 
-      - name: Copy application code
+          p = Path("generated_app/android/app/build.gradle.kts")
+
+          if not p.exists():
+              raise SystemExit(
+                  f"File not found: {p}"
+              )
+
+          text = p.read_text()
+
+          text = text.replace(
+              "compileSdk = flutter.compileSdkVersion",
+              "compileSdk = 36"
+          )
+
+          p.write_text(text)
+
+          print("compileSdk successfully set to 36")
+          PY
+
+      - name: Copy application
         run: |
           if [ -d "lib" ]; then
             rm -rf generated_app/lib
