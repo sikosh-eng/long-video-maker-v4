@@ -1,10 +1,36 @@
-name: Test
+name: Build Long Video Maker V4
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
-  test:
+  build:
+    name: Build Android APK
     runs-on: ubuntu-latest
+
     steps:
-      - run: echo "Workflow works!"
+      - name: Download repository
+        uses: actions/checkout@v4
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Check Flutter
+        run: flutter --version
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build APK
+        run: flutter build apk --release
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Long-Video-Maker-V4-APK
+          path: build/app/outputs/flutter-apk/app-release.apk
