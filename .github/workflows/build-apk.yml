@@ -41,19 +41,29 @@ jobs:
           path = Path("lib/main.dart")
           text = path.read_text()
 
-          # New file_picker API:
-          # FilePicker.pickFiles()
-          # instead of:
-          # FilePicker.platform.pickFiles()
-
           text = text.replace(
               "FilePicker.platform.pickFiles(",
               "FilePicker.pickFiles("
           )
 
+          text = text.replace(
+              "result.files.isNotEmpty",
+              "result.isNotEmpty"
+          )
+
+          text = text.replace(
+              "result.files.first.name",
+              "result.first.name"
+          )
+
+          text = text.replace(
+              "result.files.map((file) => file.name).toList()",
+              "result.map((file) => file.name).toList()"
+          )
+
           path.write_text(text)
 
-          print("FilePicker API updated successfully.")
+          print("FilePicker API fixed.")
           PY
 
       - name: Set Android compileSdk 36
