@@ -16,44 +16,21 @@ jobs:
         with:
           channel: stable
 
-      - name: Create Flutter project
+      - name: Create clean Flutter project
         run: |
           rm -rf generated_app
           flutter create --platforms=android generated_app
 
-      - name: Copy application
+      - name: Copy main.dart
         run: |
-          if [ -d "lib" ]; then
-            rm -rf generated_app/lib
-            cp -r lib generated_app/lib
-          fi
+          rm -rf generated_app/lib
+          mkdir -p generated_app/lib
+          cp lib/main.dart generated_app/lib/main.dart
 
-          if [ -d "assets" ]; then
-            cp -r assets generated_app/assets
-          fi
-
-          cp pubspec.yaml generated_app/pubspec.yaml
-
-      - name: Fix file_picker version
+      - name: Add file_picker
         working-directory: generated_app
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          import re
-
-          path = Path("pubspec.yaml")
-          text = path.read_text()
-
-          text = re.sub(
-              r'file_picker:\s*[^\n]+',
-              'file_picker: ^8.3.7',
-              text
-          )
-
-          path.write_text(text)
-
-          print("file_picker fixed to 8.3.7")
-          PY
+          flutter pub add file_picker:8.3.7
 
       - name: Set compileSdk 36
         working-directory: generated_app
@@ -63,6 +40,7 @@ jobs:
           import re
 
           path = Path("android/app/build.gradle.kts")
+
           text = path.read_text()
 
           text = re.sub(
@@ -73,7 +51,10 @@ jobs:
 
           path.write_text(text)
 
-          print("compileSdk = 36")
+          print("compileSdk configured:")
+          for line in text.splitlines():
+              if "compileSdk" in line:
+                  print(line)
           PY
 
       - name: Get dependencies
