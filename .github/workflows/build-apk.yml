@@ -27,19 +27,14 @@ jobs:
           mkdir -p generated_app/lib
           cp -r lib/* generated_app/lib/
 
-      - name: Copy assets
-        run: |
-          if [ -d "assets" ]; then
-            cp -r assets generated_app/assets
-          fi
-
-      - name: Configure Android SDK
+      - name: Add file_picker
         working-directory: generated_app
         run: |
-          echo "===== BEFORE ====="
-          cat android/app/build.gradle.kts
-          echo "=================="
+          flutter pub add file_picker
 
+      - name: Set Android compile SDK
+        working-directory: generated_app
+        run: |
           python3 - <<'PY'
           from pathlib import Path
           import re
@@ -47,14 +42,12 @@ jobs:
           path = Path("android/app/build.gradle.kts")
           text = path.read_text()
 
-          # Replace ANY compileSdk declaration
           text = re.sub(
               r'(?m)^(\s*)compileSdk(?:Version)?\s*=?.*$',
               r'\1compileSdk = 36',
               text
           )
 
-          # If no compileSdk line existed, add one inside android {}
           if "compileSdk = 36" not in text:
               text = text.replace(
                   "android {",
@@ -64,17 +57,11 @@ jobs:
 
           path.write_text(text)
 
-          print("===== AFTER =====")
-          print(path.read_text())
-          print("=================")
+          print("compileSdk configured:")
+          for line in text.splitlines():
+              if "compileSdk" in line:
+                  print(line)
           PY
-
-      - name: Check Android SDK
-        working-directory: generated_app
-        run: |
-          echo "===== FINAL COMPILE SDK ====="
-          grep -Rni "compileSdk" android
-          echo "============================"
 
       - name: Get dependencies
         working-directory: generated_app
