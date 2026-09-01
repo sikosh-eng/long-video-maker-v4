@@ -16,7 +16,7 @@ jobs:
         with:
           channel: stable
 
-      - name: Create clean Flutter project
+      - name: Create Flutter project
         run: |
           rm -rf generated_app
           flutter create --platforms=android generated_app
@@ -32,7 +32,31 @@ jobs:
         run: |
           flutter pub add file_picker
 
-      - name: Set Android compile SDK
+      - name: Fix FilePicker API
+        working-directory: generated_app
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("lib/main.dart")
+          text = path.read_text()
+
+          # New file_picker API:
+          # FilePicker.pickFiles()
+          # instead of:
+          # FilePicker.platform.pickFiles()
+
+          text = text.replace(
+              "FilePicker.platform.pickFiles(",
+              "FilePicker.pickFiles("
+          )
+
+          path.write_text(text)
+
+          print("FilePicker API updated successfully.")
+          PY
+
+      - name: Set Android compileSdk 36
         working-directory: generated_app
         run: |
           python3 - <<'PY'
@@ -57,10 +81,7 @@ jobs:
 
           path.write_text(text)
 
-          print("compileSdk configured:")
-          for line in text.splitlines():
-              if "compileSdk" in line:
-                  print(line)
+          print("compileSdk = 36")
           PY
 
       - name: Get dependencies
