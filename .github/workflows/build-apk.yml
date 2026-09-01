@@ -20,6 +20,9 @@ jobs:
       - name: Create Flutter project
         run: |
           flutter create --platforms=android generated_app
+          - name: Set Android compile SDK
+  run: |
+    sed -i 's/compileSdk flutter.compileSdkVersion/compileSdk 36/' generated_app/android/app/build.gradle
 
       - name: Copy lib
         run: |
