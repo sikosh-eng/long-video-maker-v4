@@ -1,0 +1,45 @@
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(
+        RepositoriesMode.PREFER_SETTINGS
+    )
+
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.name = "long_video_maker_v4"
+
+include ":app"
+
+def flutterSdkPath = {
+    def properties =
+        new Properties()
+
+    file("local.properties")
+        .withInputStream {
+            properties.load(it)
+        }
+
+    def flutterSdk =
+        properties.getProperty(
+            "flutter.sdk"
+        )
+
+    assert flutterSdk != null:
+        "flutter.sdk not set in local.properties"
+
+    return flutterSdk
+}()
+
+apply from:
+    "$flutterSdkPath/packages/flutter_tools/gradle/app_plugin_loader.gradle"
