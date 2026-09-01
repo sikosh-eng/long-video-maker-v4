@@ -18,51 +18,54 @@ jobs:
 
       - name: Create clean Flutter project
         run: |
+          rm -rf generated_app
           flutter create --platforms=android generated_app
 
-      - name: Set Android compile SDK to 36
+      - name: Force Android compileSdk 36
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          import re
 
-          candidates = [
+          files = [
               Path("generated_app/android/app/build.gradle.kts"),
               Path("generated_app/android/app/build.gradle")
           ]
 
-          file = next((p for p in candidates if p.exists()), None)
+          found = False
 
-          if file is None:
-              raise SystemExit("Android app Gradle file not found")
+          for path in files:
+              if not path.exists():
+                  continue
 
-          text = file.read_text()
+              found = True
+              text = path.read_text()
 
-          text, count = re.subn(
-              r'compileSdk(?:Version)?\s*(?:=\s*)?(?:flutter\.)?compileSdkVersion',
-              'compileSdk = 36',
-              text
-          )
+              lines = []
 
-          if count == 0:
-              text, count = re.subn(
-                  r'compileSdk(?:Version)?\s*=\s*\d+',
-                  'compileSdk = 36',
-                  text
-              )
+              for line in text.splitlines():
+                  if "compileSdk" in line:
+                      indent = line[:len(line) - len(line.lstrip())]
+                      if path.suffix == ".kts":
+                          line = indent + "compileSdk = 36"
+                      else:
+                          line = indent + "compileSdk 36"
+                  lines.append(line)
 
-          file.write_text(text)
+              path.write_text("\n".join(lines) + "\n")
 
-          print(f"Modified: {file}")
-          print(f"Replacements: {count}")
-          print("--- compileSdk lines ---")
+              print("Updated:", path)
 
-          for line in text.splitlines():
-              if "compileSdk" in line:
-                  print(line)
+          if not found:
+              raise SystemExit("ERROR: Android Gradle file was not found")
           PY
 
-      - name: Copy application code
+      - name: Verify compileSdk
+        run: |
+          echo "===== Android compileSdk ====="
+          grep -R "compileSdk" generated_app/android/app/
+          echo "=============================="
+
+      - name: Copy lib
         run: |
           if [ -d "lib" ]; then
             rm -rf generated_app/lib
@@ -81,15 +84,17 @@ jobs:
             cp pubspec.yaml generated_app/pubspec.yaml
           fi
 
-      - name: Install dependencies
+      - name: Get dependencies
         working-directory: generated_app
         run: flutter pub get
 
-      - name: Verify Android compile SDK
+      - name: Clean Flutter
         working-directory: generated_app
-        run: |
-          echo "Checking Android configuration..."
-          grep -R "compileSdk" android/app/
+        run: flutter clean
+
+      - name: Get dependencies again
+        working-directory: generated_app
+        run: flutter pub get
 
       - name: Build APK
         working-directory: generated_app
