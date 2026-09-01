@@ -21,41 +21,60 @@ jobs:
           rm -rf generated_app
           flutter create --platforms=android generated_app
 
-      - name: Copy main.dart
+      - name: Copy app code
         run: |
           rm -rf generated_app/lib
           mkdir -p generated_app/lib
-          cp lib/main.dart generated_app/lib/main.dart
+          cp -r lib/* generated_app/lib/
 
-      - name: Add file_picker
+      - name: Copy assets
+        run: |
+          if [ -d "assets" ]; then
+            cp -r assets generated_app/assets
+          fi
+
+      - name: Configure Android SDK
         working-directory: generated_app
         run: |
-          flutter pub add file_picker:8.3.7
+          echo "===== BEFORE ====="
+          cat android/app/build.gradle.kts
+          echo "=================="
 
-      - name: Set compileSdk 36
-        working-directory: generated_app
-        run: |
           python3 - <<'PY'
           from pathlib import Path
           import re
 
           path = Path("android/app/build.gradle.kts")
-
           text = path.read_text()
 
+          # Replace ANY compileSdk declaration
           text = re.sub(
-              r'compileSdk\s*=\s*[^\n]+',
-              'compileSdk = 36',
+              r'(?m)^(\s*)compileSdk(?:Version)?\s*=?.*$',
+              r'\1compileSdk = 36',
               text
           )
 
+          # If no compileSdk line existed, add one inside android {}
+          if "compileSdk = 36" not in text:
+              text = text.replace(
+                  "android {",
+                  "android {\n    compileSdk = 36",
+                  1
+              )
+
           path.write_text(text)
 
-          print("compileSdk configured:")
-          for line in text.splitlines():
-              if "compileSdk" in line:
-                  print(line)
+          print("===== AFTER =====")
+          print(path.read_text())
+          print("=================")
           PY
+
+      - name: Check Android SDK
+        working-directory: generated_app
+        run: |
+          echo "===== FINAL COMPILE SDK ====="
+          grep -Rni "compileSdk" android
+          echo "============================"
 
       - name: Get dependencies
         working-directory: generated_app
