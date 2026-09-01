@@ -16,35 +16,53 @@ jobs:
         with:
           channel: stable
 
-      - name: Create Flutter project
+      - name: Create clean Flutter project
         run: |
           flutter create --platforms=android generated_app
 
-      - name: Set compileSdk to 36
+      - name: Set Android compile SDK to 36
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import re
 
-          p = Path("generated_app/android/app/build.gradle.kts")
+          candidates = [
+              Path("generated_app/android/app/build.gradle.kts"),
+              Path("generated_app/android/app/build.gradle")
+          ]
 
-          if not p.exists():
-              raise SystemExit(
-                  f"File not found: {p}"
-              )
+          file = next((p for p in candidates if p.exists()), None)
 
-          text = p.read_text()
+          if file is None:
+              raise SystemExit("Android app Gradle file not found")
 
-          text = text.replace(
-              "compileSdk = flutter.compileSdkVersion",
-              "compileSdk = 36"
+          text = file.read_text()
+
+          text, count = re.subn(
+              r'compileSdk(?:Version)?\s*(?:=\s*)?(?:flutter\.)?compileSdkVersion',
+              'compileSdk = 36',
+              text
           )
 
-          p.write_text(text)
+          if count == 0:
+              text, count = re.subn(
+                  r'compileSdk(?:Version)?\s*=\s*\d+',
+                  'compileSdk = 36',
+                  text
+              )
 
-          print("compileSdk successfully set to 36")
+          file.write_text(text)
+
+          print(f"Modified: {file}")
+          print(f"Replacements: {count}")
+          print("--- compileSdk lines ---")
+
+          for line in text.splitlines():
+              if "compileSdk" in line:
+                  print(line)
           PY
 
-      - name: Copy application
+      - name: Copy application code
         run: |
           if [ -d "lib" ]; then
             rm -rf generated_app/lib
@@ -66,6 +84,12 @@ jobs:
       - name: Install dependencies
         working-directory: generated_app
         run: flutter pub get
+
+      - name: Verify Android compile SDK
+        working-directory: generated_app
+        run: |
+          echo "Checking Android configuration..."
+          grep -R "compileSdk" android/app/
 
       - name: Build APK
         working-directory: generated_app
