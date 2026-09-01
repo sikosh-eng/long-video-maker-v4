@@ -21,7 +21,7 @@ jobs:
           rm -rf generated_app
           flutter create --platforms=android generated_app
 
-      - name: Copy app files
+      - name: Copy application
         run: |
           if [ -d "lib" ]; then
             rm -rf generated_app/lib
@@ -32,11 +32,30 @@ jobs:
             cp -r assets generated_app/assets
           fi
 
-          if [ -f "pubspec.yaml" ]; then
-            cp pubspec.yaml generated_app/pubspec.yaml
-          fi
+          cp pubspec.yaml generated_app/pubspec.yaml
 
-      - name: Force compileSdk 36
+      - name: Update file_picker
+        working-directory: generated_app
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path("pubspec.yaml")
+          text = path.read_text()
+
+          text = re.sub(
+              r'file_picker:\s*[^\n]+',
+              'file_picker: ^12.1.3',
+              text
+          )
+
+          path.write_text(text)
+
+          print("file_picker updated to 12.1.3")
+          PY
+
+      - name: Set compileSdk 36
         working-directory: generated_app
         run: |
           python3 - <<'PY'
@@ -44,9 +63,6 @@ jobs:
           import re
 
           path = Path("android/app/build.gradle.kts")
-
-          if not path.exists():
-              raise SystemExit("build.gradle.kts not found")
 
           text = path.read_text()
 
@@ -58,23 +74,18 @@ jobs:
 
           path.write_text(text)
 
-          print("Final Android configuration:")
-          for line in text.splitlines():
-              if "compileSdk" in line:
-                  print(line)
+          print("compileSdk set to 36")
           PY
 
-      - name: Install dependencies
+      - name: Get dependencies
         working-directory: generated_app
-        run: |
-          flutter pub get
+        run: flutter pub get
 
-      - name: Verify compileSdk
+      - name: Show versions
         working-directory: generated_app
         run: |
-          echo "=== BUILD.GRADLE.KTS ==="
+          flutter pub deps | grep -E "file_picker|flutter_plugin_android_lifecycle" || true
           grep -n "compileSdk" android/app/build.gradle.kts
-          echo "========================"
 
       - name: Build APK
         working-directory: generated_app
