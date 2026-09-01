@@ -8,7 +8,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -21,15 +20,22 @@ jobs:
         run: |
           flutter create --platforms=android generated_app
 
-      - name: Set Android compile SDK
+      - name: Set Android compile SDK 36
         run: |
+          sed -i 's/compileSdk = flutter.compileSdkVersion/compileSdk = 36/' generated_app/android/app/build.gradle.kts
           sed -i 's/compileSdk flutter.compileSdkVersion/compileSdk 36/' generated_app/android/app/build.gradle
 
-      - name: Copy lib
+      - name: Copy application code
         run: |
           if [ -d "lib" ]; then
             rm -rf generated_app/lib
             cp -r lib generated_app/lib
+          fi
+
+      - name: Copy assets
+        run: |
+          if [ -d "assets" ]; then
+            cp -r assets generated_app/assets
           fi
 
       - name: Copy pubspec
@@ -39,14 +45,12 @@ jobs:
           fi
 
       - name: Install dependencies
-        run: |
-          cd generated_app
-          flutter pub get
+        working-directory: generated_app
+        run: flutter pub get
 
       - name: Build APK
-        run: |
-          cd generated_app
-          flutter build apk --release
+        working-directory: generated_app
+        run: flutter build apk --release
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
