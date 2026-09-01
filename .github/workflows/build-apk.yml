@@ -16,57 +16,22 @@ jobs:
         with:
           channel: stable
 
-      - name: Create Flutter project
+      - name: Create Flutter Android project
         run: |
           rm -rf generated_app
           flutter create --platforms=android generated_app
 
-      - name: Copy app code
+      - name: Copy application
         run: |
           rm -rf generated_app/lib
           mkdir -p generated_app/lib
           cp -r lib/* generated_app/lib/
 
-      - name: Add file_picker
-        working-directory: generated_app
+      - name: Use project pubspec
         run: |
-          flutter pub add file_picker
+          cp pubspec.yaml generated_app/pubspec.yaml
 
-      - name: Fix FilePicker API
-        working-directory: generated_app
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          path = Path("lib/main.dart")
-          text = path.read_text()
-
-          text = text.replace(
-              "FilePicker.platform.pickFiles(",
-              "FilePicker.pickFiles("
-          )
-
-          text = text.replace(
-              "result.files.isNotEmpty",
-              "result.isNotEmpty"
-          )
-
-          text = text.replace(
-              "result.files.first.name",
-              "result.first.name"
-          )
-
-          text = text.replace(
-              "result.files.map((file) => file.name).toList()",
-              "result.map((file) => file.name).toList()"
-          )
-
-          path.write_text(text)
-
-          print("FilePicker API fixed.")
-          PY
-
-      - name: Set Android compileSdk 36
+      - name: Configure Android
         working-directory: generated_app
         run: |
           python3 - <<'PY'
@@ -90,13 +55,15 @@ jobs:
               )
 
           path.write_text(text)
-
-          print("compileSdk = 36")
           PY
 
       - name: Get dependencies
         working-directory: generated_app
         run: flutter pub get
+
+      - name: Analyze project
+        working-directory: generated_app
+        run: flutter analyze
 
       - name: Build APK
         working-directory: generated_app
