@@ -4,37 +4,12 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-
-      - name: Create Flutter project
-        run: |
-          flutter create --platforms=android generated_app
-
-      - name: Copy application
-        run: |
-          if [ -d "lib" ]; then
-            rm -rf generated_app/lib
-            cp -r lib generated_app/lib
-          fi
-
-          if [ -f "pubspec.yaml" ]; then
-            cp pubspec.yaml generated_app/pubspec.yaml
-          fi
-
-      - name: Get packages
-        working-directory: generated_app
-        run: flutter pub get
-
+      - name: Test
+        run: echo "GitHub Actions works"
       - name: Build APK
         working-directory: generated_app
         run: flutter build apk --release
