@@ -1,17 +1,15 @@
-name: Build Android APK
+name: Build Long Video Maker APK
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup Flutter
@@ -20,6 +18,18 @@ jobs:
           flutter-version: '3.35.4'
           channel: stable
 
+      - name: Create Flutter project
+        run: |
+          mkdir /tmp/flutter_project
+          cd /tmp/flutter_project
+          flutter create --platforms=android .
+
+      - name: Copy project files
+        run: |
+          cp -r /tmp/flutter_project/android .
+          cp /tmp/flutter_project/pubspec.yaml .
+          cp /tmp/flutter_project/analysis_options.yaml .
+          
       - name: Install dependencies
         run: flutter pub get
 
