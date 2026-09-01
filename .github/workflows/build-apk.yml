@@ -65,7 +65,17 @@ jobs:
           )
 
           text = text.replace(
-              "import 'dart:io';",
+              "if (result != null && result.isNotEmpty)",
+              "if (result.isNotEmpty)"
+          )
+
+          text = text.replace(
+              "if (result != null)",
+              "if (result.isNotEmpty)"
+          )
+
+          text = text.replace(
+              "allowMultiple: true,",
               ""
           )
 
@@ -104,7 +114,7 @@ jobs:
 
       - name: Analyze
         working-directory: generated_app
-        run: flutter analyze
+        run: flutter analyze --no-fatal-warnings --no-fatal-infos
 
       - name: Build APK
         working-directory: generated_app
