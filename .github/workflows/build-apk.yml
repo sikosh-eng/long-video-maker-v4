@@ -1,9 +1,6 @@
 name: Build Long Video Maker V4
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 jobs:
@@ -12,6 +9,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
       - name: Download repository
         uses: actions/checkout@v4
 
@@ -20,17 +18,35 @@ jobs:
         with:
           channel: stable
 
-      - name: Check Flutter
-        run: flutter --version
+      - name: Create Android Flutter project
+        run: |
+          flutter create --platforms=android temp_app
 
-      - name: Get dependencies
+      - name: Copy application code
+        run: |
+          rm -rf temp_app/lib
+          cp -r lib temp_app/lib
+
+      - name: Copy assets
+        run: |
+          if [ -d "assets" ]; then
+            cp -r assets temp_app/assets
+          fi
+
+      - name: Copy pubspec
+        run: |
+          cp pubspec.yaml temp_app/pubspec.yaml
+
+      - name: Install dependencies
+        working-directory: temp_app
         run: flutter pub get
 
       - name: Build APK
+        working-directory: temp_app
         run: flutter build apk --release
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Long-Video-Maker-V4-APK
-          path: build/app/outputs/flutter-apk/app-release.apk
+          name: Long-Video-Maker-V4
+          path: temp_app/build/app/outputs/flutter-apk/app-release.apk
