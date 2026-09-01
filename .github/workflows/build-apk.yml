@@ -5,7 +5,6 @@ on:
 
 jobs:
   build:
-    name: Build Android APK
     runs-on: ubuntu-latest
 
     steps:
@@ -17,20 +16,13 @@ jobs:
         with:
           channel: stable
 
-      - name: Create Android project
-        run: |
-          flutter create --platforms=android temp_app
+      - name: Create Flutter project
+        run: flutter create --platforms=android temp_app
 
-      - name: Copy Android folder
+      - name: Copy files
         run: |
-          rm -rf android
-          cp -r temp_app/android android
-
-      - name: Copy Flutter files
-        run: |
-          mkdir -p temp_app/lib
-          cp -r lib/* temp_app/lib/ || true
-          cp pubspec.yaml temp_app/pubspec.yaml
+          cp -r lib temp_app/
+          cp pubspec.yaml temp_app/
 
       - name: Install dependencies
         working-directory: temp_app
