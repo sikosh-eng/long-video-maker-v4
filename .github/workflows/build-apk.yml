@@ -21,84 +21,67 @@ jobs:
           rm -rf generated_app
           flutter create --platforms=android generated_app
 
-      - name: Force Android compileSdk 36
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          files = [
-              Path("generated_app/android/app/build.gradle.kts"),
-              Path("generated_app/android/app/build.gradle")
-          ]
-
-          found = False
-
-          for path in files:
-              if not path.exists():
-                  continue
-
-              found = True
-              text = path.read_text()
-
-              lines = []
-
-              for line in text.splitlines():
-                  if "compileSdk" in line:
-                      indent = line[:len(line) - len(line.lstrip())]
-                      if path.suffix == ".kts":
-                          line = indent + "compileSdk = 36"
-                      else:
-                          line = indent + "compileSdk 36"
-                  lines.append(line)
-
-              path.write_text("\n".join(lines) + "\n")
-
-              print("Updated:", path)
-
-          if not found:
-              raise SystemExit("ERROR: Android Gradle file was not found")
-          PY
-
-      - name: Verify compileSdk
-        run: |
-          echo "===== Android compileSdk ====="
-          grep -R "compileSdk" generated_app/android/app/
-          echo "=============================="
-
-      - name: Copy lib
+      - name: Copy app files
         run: |
           if [ -d "lib" ]; then
             rm -rf generated_app/lib
             cp -r lib generated_app/lib
           fi
 
-      - name: Copy assets
-        run: |
           if [ -d "assets" ]; then
             cp -r assets generated_app/assets
           fi
 
-      - name: Copy pubspec
-        run: |
           if [ -f "pubspec.yaml" ]; then
             cp pubspec.yaml generated_app/pubspec.yaml
           fi
 
-      - name: Get dependencies
+      - name: Force compileSdk 36
         working-directory: generated_app
-        run: flutter pub get
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
 
-      - name: Clean Flutter
-        working-directory: generated_app
-        run: flutter clean
+          path = Path("android/app/build.gradle.kts")
 
-      - name: Get dependencies again
+          if not path.exists():
+              raise SystemExit("build.gradle.kts not found")
+
+          text = path.read_text()
+
+          text = re.sub(
+              r'compileSdk\s*=\s*[^\n]+',
+              'compileSdk = 36',
+              text
+          )
+
+          path.write_text(text)
+
+          print("Final Android configuration:")
+          for line in text.splitlines():
+              if "compileSdk" in line:
+                  print(line)
+          PY
+
+      - name: Install dependencies
         working-directory: generated_app
-        run: flutter pub get
+        run: |
+          flutter pub get
+
+      - name: Verify compileSdk
+        working-directory: generated_app
+        run: |
+          echo "=== BUILD.GRADLE.KTS ==="
+          grep -n "compileSdk" android/app/build.gradle.kts
+          echo "========================"
 
       - name: Build APK
         working-directory: generated_app
-        run: flutter build apk --release
+        run: |
+          flutter clean
+          flutter pub get
+          flutter build apk --release
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
