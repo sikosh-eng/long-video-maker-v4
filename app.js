@@ -25,6 +25,8 @@ const createButton =
     document.getElementById("createButton");
 const previewButton =
     document.getElementById("previewButton");
+const previewAudio =
+    document.getElementById("previewAudio");
 
 const status =
     document.getElementById("status");
@@ -444,26 +446,51 @@ previewButton.addEventListener(
 
 
 function startPreview() {
+function startPreview() {
+
+    if (!audioFile) {
+        showStatus("❌ Сначала добавь озвучку.");
+        return;
+    }
+
+    if (!previewTimeline.length) {
+        showStatus("❌ Сначала создай автомонтаж.");
+        return;
+    }
+
+    const preview =
+        document.getElementById("videoPreview");
+
+    const imageElement =
+        document.getElementById("previewImage");
+
+    const audioElement =
+        document.getElementById("previewAudio");
+
+
+    preview.style.display = "block";
+
+
+    // Загружаем озвучку
+    if (audioElement) {
+
+        audioElement.src =
+            URL.createObjectURL(audioFile);
+
+        audioElement.currentTime = 0;
+
+    }
+
 
     let index = 0;
 
-    clearInterval(previewTimer);
 
-    showStatus(
-        "▶️ Предпросмотр запущен..."
-    );
-
-
-    function showNext() {
+    function playNext() {
 
         if (
             index >=
             previewTimeline.length
         ) {
-
-            clearInterval(
-                previewTimer
-            );
 
             showStatus(
                 "✅ Предпросмотр завершён."
@@ -477,8 +504,27 @@ function startPreview() {
             previewTimeline[index];
 
 
+        // Показываем картинку
+
+        if (
+            imageElement &&
+            item.image
+        ) {
+
+            const imageURL =
+                URL.createObjectURL(
+                    item.image
+                );
+
+            imageElement.src =
+                imageURL;
+        }
+
+
+        // Показываем информацию
+
         showStatus(
-            "🖼️ Кадр " +
+            "▶️ Кадр " +
             (index + 1) +
             "\n\n" +
             "⏱️ " +
@@ -494,94 +540,47 @@ function startPreview() {
         );
 
 
+        const duration =
+            Math.max(
+                0.5,
+                (
+                    item.end -
+                    item.start
+                )
+            ) * 1000;
+
+
         index++;
-    }
 
 
-    showNext();
-
-
-    function playTimeline() {
-
-    if (
-        index >=
-        previewTimeline.length
-    ) {
-
-        showStatus(
-            "✅ Предпросмотр завершён."
-        );
-
-        return;
-    }
-
-
-    const item =
-        previewTimeline[index];
-
-
-    if (item.image) {
-
-        const url =
-            URL.createObjectURL(
-                item.image
-            );
-
-
-        imageElement.onload =
-            function () {
-
-                URL.revokeObjectURL(
-                    url
-                );
-
-            };
-
-
-        imageElement.src =
-            url;
-    }
-
-
-    showStatus(
-        "▶️ Кадр " +
-        (index + 1) +
-        "\n\n" +
-        "⏱️ " +
-        formatTime(item.start) +
-        " → " +
-        formatTime(item.end) +
-        "\n\n" +
-        "🗣️ " +
-        (
-            item.text ||
-            "Текст отсутствует"
-        )
-    );
-
-
-    const duration =
-        Math.max(
-            0.5,
-            (
-                item.end -
-                item.start
-            ) * 1000
-        );
-
-
-    index++;
-
-
-    previewTimer =
         setTimeout(
-            playTimeline,
+            playNext,
             duration
         );
+    }
+
+
+    // Запускаем аудио
+
+    if (audioElement) {
+
+        audioElement.play()
+            .catch(
+                () => {
+                    console.log(
+                        "Нажми Play на аудио."
+                    );
+                }
+            );
+    }
+
+
+    // Запускаем картинки
+
+    playNext();
+}
+    
+        
 }
 
 
-index = 0;
-
-playTimeline();
-}
